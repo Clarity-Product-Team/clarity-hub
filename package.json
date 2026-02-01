@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Customer Intelligence Platform for Clarity.ai",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
