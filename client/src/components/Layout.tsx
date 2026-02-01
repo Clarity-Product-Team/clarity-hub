@@ -2,10 +2,8 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import {
   HomeIcon,
-  BuildingOfficeIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  SparklesIcon,
 } from '@heroicons/react/24/outline';
 
 export default function Layout() {

@@ -71,9 +71,9 @@ export default function AddCompany() {
     try {
       const dataToSave = {
         ...formData,
-        contract_value: formData.contract_value ? parseFloat(formData.contract_value) : null,
-        contract_start_date: formData.contract_start_date || null,
-        contract_end_date: formData.contract_end_date || null,
+        contract_value: formData.contract_value ? parseFloat(formData.contract_value) : undefined,
+        contract_start_date: formData.contract_start_date || undefined,
+        contract_end_date: formData.contract_end_date || undefined,
       };
 
       if (isEditing && id) {

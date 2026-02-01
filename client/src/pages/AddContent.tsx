@@ -20,9 +20,9 @@ type ContentType = 'transcript' | 'email' | 'document' | 'media';
 
 export default function AddContent() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  useNavigate(); // Keep hook for potential navigation
   const { currentCompany, fetchCompany, isLoading } = useCompanyStore();
-  const { uploadFile, pasteContent, isUploading, uploadProgress, error: mediaError } = useMediaStore();
+  const { uploadFile, pasteContent, isUploading, uploadProgress } = useMediaStore();
   const [activeType, setActiveType] = useState<ContentType>('media');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');

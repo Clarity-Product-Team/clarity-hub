@@ -28,7 +28,7 @@ import {
   MusicalNoteIcon,
   DocumentIcon,
 } from '@heroicons/react/24/outline';
-import type { Transcript, Email, Document, AIResponse, ChatMessage, MediaFile } from '../types';
+import type { Transcript, Email, Document, AIResponse, ChatMessage } from '../types';
 
 type Tab = 'overview' | 'transcripts' | 'emails' | 'documents' | 'media' | 'ask';
 

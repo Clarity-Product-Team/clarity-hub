@@ -1,6 +1,7 @@
 {
   "name": "clarity-hub-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "Clarity Hub API Server",
   "main": "dist/index.js",
   "scripts": {

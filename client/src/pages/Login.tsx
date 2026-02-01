@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { SparklesIcon } from '@heroicons/react/24/outline';
 
 export default function Login() {
   const [email, setEmail] = useState('');

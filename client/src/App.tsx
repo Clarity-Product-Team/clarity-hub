@@ -11,7 +11,7 @@ import AddContent from './pages/AddContent';
 import CompanyAdmin from './pages/CompanyAdmin';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { user, token } = useAuthStore();
+  const { token } = useAuthStore();
   
   if (!token) {
     return <Navigate to="/login" replace />;
