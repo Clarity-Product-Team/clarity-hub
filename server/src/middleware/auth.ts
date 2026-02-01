@@ -11,13 +11,21 @@ export interface AuthRequest extends Request {
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
+  const queryToken = req.query.token as string | undefined;
   
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token: string | null = null;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (queryToken) {
+    // Allow token in query string for browser-initiated requests (images, videos, PDFs)
+    token = queryToken;
+  }
+  
+  if (!token) {
     res.status(401).json({ error: 'No token provided' });
     return;
   }
-
-  const token = authHeader.split(' ')[1];
   
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as {

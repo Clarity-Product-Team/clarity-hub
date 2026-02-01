@@ -99,6 +99,27 @@ CREATE TABLE IF NOT EXISTS chat_history (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Media files table (uploads: videos, PDFs, images, audio, etc.)
+CREATE TABLE IF NOT EXISTS media_files (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  file_type VARCHAR(50) NOT NULL CHECK (file_type IN ('video', 'audio', 'image', 'pdf', 'document', 'transcript', 'other')),
+  original_filename VARCHAR(500) NOT NULL,
+  stored_filename VARCHAR(500) NOT NULL,
+  file_path VARCHAR(1000) NOT NULL,
+  file_size INTEGER,
+  mime_type VARCHAR(100),
+  extracted_text TEXT,
+  processing_status VARCHAR(50) DEFAULT 'pending' CHECK (processing_status IN ('pending', 'processing', 'completed', 'failed')),
+  processing_error TEXT,
+  metadata JSONB DEFAULT '{}',
+  uploaded_by UUID REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Tags for organizing content
 CREATE TABLE IF NOT EXISTS tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -119,6 +140,7 @@ CREATE INDEX IF NOT EXISTS idx_documents_company_id ON documents(company_id);
 CREATE INDEX IF NOT EXISTS idx_transcripts_company_id ON transcripts(company_id);
 CREATE INDEX IF NOT EXISTS idx_emails_company_id ON emails(company_id);
 CREATE INDEX IF NOT EXISTS idx_chat_history_company_id ON chat_history(company_id);
+CREATE INDEX IF NOT EXISTS idx_media_files_company_id ON media_files(company_id);
 CREATE INDEX IF NOT EXISTS idx_companies_type ON companies(type);
 CREATE INDEX IF NOT EXISTS idx_companies_status ON companies(status);
 
@@ -126,6 +148,7 @@ CREATE INDEX IF NOT EXISTS idx_companies_status ON companies(status);
 CREATE INDEX IF NOT EXISTS idx_transcripts_content_search ON transcripts USING gin(to_tsvector('english', content));
 CREATE INDEX IF NOT EXISTS idx_emails_body_search ON emails USING gin(to_tsvector('english', body));
 CREATE INDEX IF NOT EXISTS idx_documents_content_search ON documents USING gin(to_tsvector('english', COALESCE(content, '')));
+CREATE INDEX IF NOT EXISTS idx_media_files_text_search ON media_files USING gin(to_tsvector('english', COALESCE(extracted_text, '')));
 `;
 
 async function migrate() {

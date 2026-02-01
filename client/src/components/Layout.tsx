@@ -30,12 +30,17 @@ export default function Layout() {
       <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200">
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200">
-          <div className="w-10 h-10 bg-gradient-to-br from-clarity-500 to-clarity-700 rounded-xl flex items-center justify-center">
-            <SparklesIcon className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 bg-clarity-900 rounded-xl flex items-center justify-center">
+            <svg viewBox="0 0 100 100" className="w-6 h-6" fill="none">
+              <path d="M50 0 L58 42 L50 35 L42 42 Z" fill="white"/>
+              <path d="M100 50 L58 58 L65 50 L58 42 Z" fill="white"/>
+              <path d="M50 100 L42 58 L50 65 L58 58 Z" fill="white"/>
+              <path d="M0 50 L42 42 L35 50 L42 58 Z" fill="white"/>
+            </svg>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Clarity Hub</h1>
-            <p className="text-xs text-gray-500">Customer Intelligence</p>
+            <h1 className="text-lg font-bold text-clarity-900">Clarity</h1>
+            <p className="text-xs text-clarity-500">Customer Intelligence</p>
           </div>
         </div>
 
@@ -48,8 +53,8 @@ export default function Layout() {
                   to={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive(item.href)
-                      ? 'bg-clarity-50 text-clarity-700'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-clarity-100 text-clarity-900'
+                      : 'text-clarity-900 hover:bg-clarity-50 hover:text-clarity-800'
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -63,8 +68,8 @@ export default function Layout() {
         {/* User section */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 bg-clarity-100 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-clarity-700">
+            <div className="w-9 h-9 bg-clarity-900 rounded-full flex items-center justify-center">
+              <span className="text-sm font-medium text-white">
                 {user?.name?.charAt(0).toUpperCase()}
               </span>
             </div>

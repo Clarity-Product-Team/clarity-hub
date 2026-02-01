@@ -4,9 +4,8 @@ import { useCompanyStore } from '../stores/companyStore';
 import {
   PlusIcon,
   BuildingOfficeIcon,
-  PencilIcon,
-  DocumentPlusIcon,
   TrashIcon,
+  FolderOpenIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 
@@ -37,7 +36,7 @@ export default function AdminPanel() {
         </div>
         <Link
           to="/admin/company/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-clarity-600 hover:bg-clarity-700 text-white font-medium rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-clarity-900 hover:bg-clarity-800 text-white font-medium rounded-lg transition-colors"
         >
           <PlusIcon className="w-5 h-5" />
           Add Company
@@ -97,7 +96,7 @@ export default function AdminPanel() {
                       <div>
                         <Link
                           to={`/company/${company.id}`}
-                          className="font-medium text-gray-900 hover:text-clarity-600"
+                          className="font-medium text-gray-900 hover:text-clarity-900"
                         >
                           {company.name}
                         </Link>
@@ -131,7 +130,7 @@ export default function AdminPanel() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-500">
-                      {(company.transcript_count || 0) + (company.email_count || 0) + (company.document_count || 0)} items
+                      {company.media_file_count || 0} {(company.media_file_count || 0) === 1 ? 'file' : 'files'}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
@@ -140,18 +139,12 @@ export default function AdminPanel() {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        to={`/admin/company/${company.id}/content`}
-                        className="p-2 text-gray-400 hover:text-clarity-600 hover:bg-clarity-50 rounded-lg transition-colors"
-                        title="Add content"
+                        to={`/admin/company/${company.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-clarity-900 hover:bg-clarity-50 rounded-lg transition-colors"
+                        title="Manage files"
                       >
-                        <DocumentPlusIcon className="w-5 h-5" />
-                      </Link>
-                      <Link
-                        to={`/admin/company/${company.id}/edit`}
-                        className="p-2 text-gray-400 hover:text-clarity-600 hover:bg-clarity-50 rounded-lg transition-colors"
-                        title="Edit company"
-                      >
-                        <PencilIcon className="w-5 h-5" />
+                        <FolderOpenIcon className="w-4 h-4" />
+                        Manage
                       </Link>
                       <button
                         onClick={() => handleDelete(company.id, company.name)}

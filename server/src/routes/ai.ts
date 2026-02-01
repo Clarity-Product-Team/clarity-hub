@@ -1,7 +1,9 @@
 import { Router, Response } from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, Part } from '@google/generative-ai';
 import { query } from '../db/index.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 
@@ -45,6 +47,15 @@ router.post('/ask', authenticate, async (req: AuthRequest, res: Response) => {
     // Get all documents
     const documentsResult = await query(
       'SELECT id, title, type, content FROM documents WHERE company_id = $1',
+      [company_id]
+    );
+
+    // Get all media files with extracted text
+    const mediaFilesResult = await query(
+      `SELECT id, title, description, file_type, original_filename, file_path, 
+              mime_type, extracted_text, metadata 
+       FROM media_files 
+       WHERE company_id = $1 AND processing_status = 'completed'`,
       [company_id]
     );
 
@@ -98,6 +109,34 @@ router.post('/ask', authenticate, async (req: AuthRequest, res: Response) => {
       }
     }
 
+    // Add media files with extracted text
+    if (mediaFilesResult.rows.length > 0) {
+      context += '# Uploaded Media Files\n\n';
+      for (const media of mediaFilesResult.rows) {
+        context += `## ${media.title} (${media.file_type})\n`;
+        context += `Original File: ${media.original_filename}\n`;
+        if (media.description) {
+          context += `Description: ${media.description}\n`;
+        }
+        if (media.extracted_text) {
+          context += `\nContent:\n${media.extracted_text}\n\n`;
+        }
+      }
+    }
+
+    // Collect image files for Gemini vision (if any)
+    const imageFiles: { path: string; mimeType: string; title: string; id: string }[] = [];
+    for (const media of mediaFilesResult.rows) {
+      if (media.mime_type?.startsWith('image/') && fs.existsSync(media.file_path)) {
+        imageFiles.push({
+          path: media.file_path,
+          mimeType: media.mime_type,
+          title: media.title,
+          id: media.id
+        });
+      }
+    }
+
     // Build sources array for response
     const sources: Array<{ type: string; id: string; title: string; excerpt: string }> = [];
     
@@ -117,16 +156,36 @@ ${context}
 
 ---
 
-Now answer the following question. If you reference specific information, cite the source (transcript name, email subject, or document title). If the answer isn't in the provided context, say so.`;
+Now answer the following question. If you reference specific information, cite the source (transcript name, email subject, document title, or media file name). If the answer isn't in the provided context, say so.`;
 
     try {
       const genAI = getGeminiClient();
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
 
-      const result = await model.generateContent([
+      // Build content parts array
+      const contentParts: Part[] = [
         { text: systemPrompt },
         { text: `Question: ${question}` }
-      ]);
+      ];
+
+      // Add images to the request if available (Gemini vision)
+      for (const img of imageFiles) {
+        try {
+          const imageData = fs.readFileSync(img.path);
+          const base64Image = imageData.toString('base64');
+          contentParts.push({
+            inlineData: {
+              mimeType: img.mimeType,
+              data: base64Image
+            }
+          });
+          contentParts.push({ text: `[Image: ${img.title}]` });
+        } catch (imgError) {
+          console.error(`Failed to load image ${img.path}:`, imgError);
+        }
+      }
+
+      const result = await model.generateContent(contentParts);
 
       const answer = result.response.text();
 
@@ -164,6 +223,24 @@ Now answer the following question. If you reference specific information, cite t
             id: doc.id,
             title: doc.title,
             excerpt: doc.content ? doc.content.substring(0, 200) + '...' : ''
+          });
+        }
+      }
+
+      // Add media files as sources
+      for (const media of mediaFilesResult.rows) {
+        if (answer.toLowerCase().includes(media.title.toLowerCase()) || 
+            answer.toLowerCase().includes(media.file_type.toLowerCase()) ||
+            answer.toLowerCase().includes(media.original_filename.toLowerCase()) ||
+            answer.toLowerCase().includes('media') ||
+            answer.toLowerCase().includes('file') ||
+            answer.toLowerCase().includes('image') ||
+            answer.toLowerCase().includes('screenshot')) {
+          sources.push({
+            type: 'media',
+            id: media.id,
+            title: media.title,
+            excerpt: media.extracted_text ? media.extracted_text.substring(0, 200) + '...' : `[${media.file_type}: ${media.original_filename}]`
           });
         }
       }

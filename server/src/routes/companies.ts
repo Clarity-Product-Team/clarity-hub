@@ -11,9 +11,10 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
     
     let sql = `
       SELECT c.*,
-        (SELECT COUNT(*) FROM transcripts WHERE company_id = c.id) as transcript_count,
-        (SELECT COUNT(*) FROM emails WHERE company_id = c.id) as email_count,
-        (SELECT COUNT(*) FROM documents WHERE company_id = c.id) as document_count
+        (SELECT COUNT(*)::integer FROM media_files WHERE company_id = c.id) as media_file_count,
+        (SELECT COUNT(*)::integer FROM media_files WHERE company_id = c.id AND file_type = 'transcript') as transcript_count,
+        (SELECT COUNT(*)::integer FROM media_files WHERE company_id = c.id AND file_type = 'email') as email_count,
+        (SELECT COUNT(*)::integer FROM media_files WHERE company_id = c.id AND file_type IN ('document', 'pdf')) as document_count
       FROM companies c
       WHERE 1=1
     `;
@@ -52,9 +53,10 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     // Get company
     const companyResult = await query(
       `SELECT c.*,
-        (SELECT COUNT(*) FROM transcripts WHERE company_id = c.id) as transcript_count,
-        (SELECT COUNT(*) FROM emails WHERE company_id = c.id) as email_count,
-        (SELECT COUNT(*) FROM documents WHERE company_id = c.id) as document_count
+        (SELECT COUNT(*)::integer FROM media_files WHERE company_id = c.id) as media_file_count,
+        (SELECT COUNT(*)::integer FROM media_files WHERE company_id = c.id AND file_type = 'transcript') as transcript_count,
+        (SELECT COUNT(*)::integer FROM media_files WHERE company_id = c.id AND file_type = 'email') as email_count,
+        (SELECT COUNT(*)::integer FROM media_files WHERE company_id = c.id AND file_type IN ('document', 'pdf')) as document_count
       FROM companies c WHERE c.id = $1`,
       [id]
     );

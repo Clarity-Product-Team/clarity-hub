@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useCompanyStore } from '../stores/companyStore';
+import { useMediaStore } from '../stores/mediaStore';
 import { useAuthStore } from '../stores/authStore';
 import api from '../lib/api';
 import ReactMarkdown from 'react-markdown';
@@ -19,17 +20,26 @@ import {
   ChevronUpIcon,
   PencilIcon,
   PlusIcon,
+  CloudArrowUpIcon,
+  TrashIcon,
+  ArrowDownTrayIcon,
+  PhotoIcon,
+  FilmIcon,
+  MusicalNoteIcon,
+  DocumentIcon,
 } from '@heroicons/react/24/outline';
-import type { Transcript, Email, Document, AIResponse, ChatMessage } from '../types';
+import type { Transcript, Email, Document, AIResponse, ChatMessage, MediaFile } from '../types';
 
-type Tab = 'overview' | 'transcripts' | 'emails' | 'documents' | 'ask';
+type Tab = 'overview' | 'transcripts' | 'emails' | 'documents' | 'media' | 'ask';
 
 export default function CompanyDetail() {
   const { id } = useParams<{ id: string }>();
   const { currentCompany, fetchCompany, isLoading } = useCompanyStore();
+  const { mediaFiles, fetchMediaFiles, deleteMediaFile } = useMediaStore();
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [deletingMedia, setDeletingMedia] = useState<string | null>(null);
 
   // AI Chat state
   const [question, setQuestion] = useState('');
@@ -41,8 +51,9 @@ export default function CompanyDetail() {
     if (id) {
       fetchCompany(id);
       loadChatHistory(id);
+      fetchMediaFiles(id);
     }
-  }, [id, fetchCompany]);
+  }, [id, fetchCompany, fetchMediaFiles]);
 
   const loadChatHistory = async (companyId: string) => {
     try {
@@ -88,10 +99,39 @@ export default function CompanyDetail() {
     setExpandedItems(newExpanded);
   };
 
+  const handleDeleteMedia = async (mediaId: string) => {
+    if (!confirm('Are you sure you want to delete this file?')) return;
+    setDeletingMedia(mediaId);
+    try {
+      await deleteMediaFile(mediaId);
+    } catch (error) {
+      console.error('Failed to delete media file:', error);
+    } finally {
+      setDeletingMedia(null);
+    }
+  };
+
+  const getMediaIcon = (fileType: string) => {
+    switch (fileType) {
+      case 'image': return PhotoIcon;
+      case 'video': return FilmIcon;
+      case 'audio': return MusicalNoteIcon;
+      case 'pdf': return DocumentTextIcon;
+      default: return DocumentIcon;
+    }
+  };
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   if (isLoading || !currentCompany) {
     return (
       <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-clarity-600 mx-auto"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-clarity-900 mx-auto"></div>
         <p className="text-gray-500 mt-4">Loading company...</p>
       </div>
     );
@@ -102,6 +142,7 @@ export default function CompanyDetail() {
     { id: 'transcripts', name: `Transcripts (${currentCompany.transcripts?.length || 0})` },
     { id: 'emails', name: `Emails (${currentCompany.emails?.length || 0})` },
     { id: 'documents', name: `Documents (${currentCompany.documents?.length || 0})` },
+    { id: 'media', name: `Media Files (${mediaFiles?.length || 0})`, icon: CloudArrowUpIcon },
     { id: 'ask', name: 'Ask AI', icon: SparklesIcon },
   ];
 
@@ -148,7 +189,7 @@ export default function CompanyDetail() {
                   href={currentCompany.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-clarity-600 hover:text-clarity-700 text-sm mt-2"
+                  className="inline-flex items-center gap-1 text-clarity-900 hover:text-clarity-800 text-sm mt-2"
                 >
                   <GlobeAltIcon className="w-4 h-4" />
                   {currentCompany.website}
@@ -179,7 +220,7 @@ export default function CompanyDetail() {
                 </Link>
                 <Link
                   to={`/admin/company/${id}/content`}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-clarity-600 hover:bg-clarity-700 rounded-lg"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-clarity-900 hover:bg-clarity-800 rounded-lg"
                 >
                   <PlusIcon className="w-4 h-4" />
                   Add Content
@@ -202,7 +243,7 @@ export default function CompanyDetail() {
             {currentCompany.primary_contact_email && (
               <a
                 href={`mailto:${currentCompany.primary_contact_email}`}
-                className="flex items-center gap-1 text-sm text-clarity-600 hover:text-clarity-700"
+                className="flex items-center gap-1 text-sm text-clarity-900 hover:text-clarity-800"
               >
                 <EnvelopeIcon className="w-4 h-4" />
                 {currentCompany.primary_contact_email}
@@ -221,7 +262,7 @@ export default function CompanyDetail() {
               onClick={() => setActiveTab(tab.id as Tab)}
               className={`flex items-center gap-2 py-3 border-b-2 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'border-clarity-600 text-clarity-600'
+                  ? 'border-clarity-900 text-clarity-900'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -304,14 +345,18 @@ export default function CompanyDetail() {
                   <span className="text-gray-600">Documents</span>
                   <span className="font-semibold text-gray-900">{currentCompany.document_count || 0}</span>
                 </div>
+                <div className="flex items-center justify-between border-t pt-3 mt-3">
+                  <span className="text-gray-600">Total Files</span>
+                  <span className="font-semibold text-gray-900">{currentCompany.media_file_count || 0}</span>
+                </div>
               </div>
             </div>
 
             {/* Ask AI Quick Access */}
-            <div className="bg-gradient-to-br from-clarity-500 to-clarity-700 rounded-xl p-6 text-white">
+            <div className="bg-clarity-900 rounded-xl p-6 text-white">
               <SparklesIcon className="w-8 h-8 mb-3" />
               <h3 className="text-lg font-semibold mb-2">Ask AI about {currentCompany.name}</h3>
-              <p className="text-clarity-100 text-sm mb-4">
+              <p className="text-clarity-300 text-sm mb-4">
                 Get instant answers based on all available data.
               </p>
               <button
@@ -388,13 +433,135 @@ export default function CompanyDetail() {
         </div>
       )}
 
+      {/* Media Files Tab */}
+      {activeTab === 'media' && (
+        <div className="space-y-4">
+          {/* Upload button for admins */}
+          {user?.role === 'admin' && (
+            <div className="flex justify-end">
+              <Link
+                to={`/admin/company/${id}/content`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-clarity-900 hover:bg-clarity-800 text-white font-medium rounded-lg transition-colors"
+              >
+                <CloudArrowUpIcon className="w-5 h-5" />
+                Upload Media
+              </Link>
+            </div>
+          )}
+
+          {mediaFiles?.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+              <CloudArrowUpIcon className="w-12 h-12 text-gray-300 mx-auto" />
+              <h3 className="text-lg font-medium text-gray-900 mt-4">No media files yet</h3>
+              <p className="text-gray-500 mt-1">Upload files to make them available for AI queries.</p>
+              {user?.role === 'admin' && (
+                <Link
+                  to={`/admin/company/${id}/content`}
+                  className="inline-flex items-center gap-2 mt-4 text-clarity-900 hover:text-clarity-800 font-medium"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  Add your first file
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">File</th>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Type</th>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Size</th>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Status</th>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Uploaded</th>
+                    <th className="text-right px-6 py-3 text-sm font-medium text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {mediaFiles?.map((media) => {
+                    const Icon = getMediaIcon(media.file_type);
+                    return (
+                      <tr key={media.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <Icon className="w-8 h-8 text-gray-400" />
+                            <div>
+                              <p className="font-medium text-gray-900">{media.title}</p>
+                              <p className="text-xs text-gray-500">{media.original_filename}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 capitalize">
+                            {media.file_type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {formatFileSize(media.file_size)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            media.processing_status === 'completed'
+                              ? 'bg-green-100 text-green-700'
+                              : media.processing_status === 'failed'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {media.processing_status === 'completed' ? 'Ready' : 
+                             media.processing_status === 'failed' ? 'Failed' : 'Processing'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {format(new Date(media.created_at), 'MMM d, yyyy')}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <a
+                              href={`/api/media/${media.id}/download`}
+                              className="p-2 text-gray-400 hover:text-clarity-900 hover:bg-clarity-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <ArrowDownTrayIcon className="w-5 h-5" />
+                            </a>
+                            {user?.role === 'admin' && (
+                              <button
+                                onClick={() => handleDeleteMedia(media.id)}
+                                disabled={deletingMedia === media.id}
+                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Delete"
+                              >
+                                <TrashIcon className="w-5 h-5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Info box */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <h4 className="font-medium text-blue-900 mb-1">How media files work</h4>
+            <p className="text-sm text-blue-700">
+              Uploaded files are processed to extract text content. When you ask the AI questions about this company, 
+              all uploaded media files are included in the context, allowing the AI to reference information from 
+              PDFs, documents, transcripts, and even analyze images.
+            </p>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'ask' && (
         <div className="grid grid-cols-3 gap-6">
           <div className="col-span-2">
             {/* Ask Form */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-clarity-500 to-clarity-700 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-clarity-900 rounded-xl flex items-center justify-center">
                   <SparklesIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -418,7 +585,7 @@ export default function CompanyDetail() {
                   <button
                     type="submit"
                     disabled={isAsking || !question.trim()}
-                    className="px-6 py-3 bg-clarity-600 hover:bg-clarity-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-3 bg-clarity-900 hover:bg-clarity-800 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isAsking ? (
                       <>
@@ -440,7 +607,7 @@ export default function CompanyDetail() {
             {aiResponse && (
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="w-8 h-8 bg-gradient-to-br from-clarity-500 to-clarity-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-clarity-900 rounded-lg flex items-center justify-center flex-shrink-0">
                     <SparklesIcon className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1">
@@ -463,6 +630,7 @@ export default function CompanyDetail() {
                           {source.type === 'transcript' && <VideoCameraIcon className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />}
                           {source.type === 'email' && <EnvelopeIcon className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />}
                           {source.type === 'document' && <DocumentTextIcon className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />}
+                          {source.type === 'media' && <CloudArrowUpIcon className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />}
                           <div>
                             <span className="font-medium">{source.title}</span>
                             {source.excerpt && (

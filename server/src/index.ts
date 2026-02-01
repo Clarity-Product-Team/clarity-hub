@@ -10,6 +10,7 @@ import transcriptsRoutes from './routes/transcripts.js';
 import emailsRoutes from './routes/emails.js';
 import documentsRoutes from './routes/documents.js';
 import aiRoutes from './routes/ai.js';
+import mediaRoutes from './routes/media.js';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/transcripts', transcriptsRoutes);
 app.use('/api/emails', emailsRoutes);
 app.use('/api/documents', documentsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/media', mediaRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

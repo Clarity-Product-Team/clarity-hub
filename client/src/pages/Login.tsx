@@ -20,15 +20,20 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-clarity-600 to-clarity-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-clarity-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <SparklesIcon className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <svg viewBox="0 0 100 100" className="w-10 h-10" fill="none">
+              <path d="M50 0 L58 42 L50 35 L42 42 Z" fill="#0f172a"/>
+              <path d="M100 50 L58 58 L65 50 L58 42 Z" fill="#0f172a"/>
+              <path d="M50 100 L42 58 L50 65 L58 58 Z" fill="#0f172a"/>
+              <path d="M0 50 L42 42 L35 50 L42 58 Z" fill="#0f172a"/>
+            </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white">Clarity Hub</h1>
-          <p className="text-clarity-200 mt-2">Customer Intelligence Platform</p>
+          <h1 className="text-3xl font-bold text-white">Clarity</h1>
+          <p className="text-clarity-400 mt-2">Customer Intelligence Hub</p>
         </div>
 
         {/* Login Form */}
@@ -75,7 +80,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 bg-clarity-600 hover:bg-clarity-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 px-4 bg-clarity-900 hover:bg-clarity-800 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
@@ -92,7 +97,7 @@ export default function Login() {
           </div>
         </div>
 
-        <p className="text-center text-clarity-200 text-sm mt-6">
+        <p className="text-center text-clarity-500 text-sm mt-6">
           Powered by getclarity.ai
         </p>
       </div>

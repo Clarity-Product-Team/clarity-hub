@@ -25,6 +25,7 @@ export interface Company {
   notes?: string;
   created_at: string;
   updated_at: string;
+  media_file_count?: number;
   transcript_count?: number;
   email_count?: number;
   document_count?: number;
@@ -35,6 +36,7 @@ export interface CompanyWithDetails extends Company {
   transcripts: Transcript[];
   emails: Email[];
   documents: Document[];
+  media_files?: MediaFile[];
 }
 
 export interface Transcript {
@@ -85,6 +87,27 @@ export interface Tag {
   color: string;
 }
 
+export interface MediaFile {
+  id: string;
+  company_id: string;
+  title: string;
+  description?: string;
+  file_type: 'video' | 'audio' | 'image' | 'pdf' | 'document' | 'transcript' | 'other';
+  original_filename: string;
+  stored_filename: string;
+  file_path: string;
+  file_size?: number;
+  mime_type?: string;
+  extracted_text?: string;
+  processing_status: 'pending' | 'processing' | 'completed' | 'failed';
+  processing_error?: string;
+  metadata?: Record<string, any>;
+  uploaded_by?: string;
+  uploaded_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ChatMessage {
   id: string;
   company_id: string;
@@ -97,7 +120,7 @@ export interface ChatMessage {
 }
 
 export interface Source {
-  type: 'transcript' | 'email' | 'document';
+  type: 'transcript' | 'email' | 'document' | 'media';
   id: string;
   title: string;
   excerpt: string;

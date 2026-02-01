@@ -8,6 +8,7 @@ import CompanyDetail from './pages/CompanyDetail';
 import AdminPanel from './pages/AdminPanel';
 import AddCompany from './pages/AddCompany';
 import AddContent from './pages/AddContent';
+import CompanyAdmin from './pages/CompanyAdmin';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, token } = useAuthStore();
@@ -79,6 +80,14 @@ function App() {
             element={
               <AdminRoute>
                 <AddContent />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/company/:id"
+            element={
+              <AdminRoute>
+                <CompanyAdmin />
               </AdminRoute>
             }
           />
